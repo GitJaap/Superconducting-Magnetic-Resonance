@@ -6,7 +6,7 @@ Created on 23 okt. 2014
 from numpy import *;
 from measurement.meas import MeasureFromVecs
 
-def getNewPoint(xCur,yCur,xVec,yVec,nPoints,nRough):
+def getNewPoint(xCur,yCur,xStart,xEnd,yMeasureFunc,nPoints,nRough):
     '''determines which point to measure next based on the previous points(uses vectors as measurement simulation)'''
     #first convert the lists to arrays for computational simplicity
     xCurA = array(xCur);

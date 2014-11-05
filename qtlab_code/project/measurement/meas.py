@@ -15,6 +15,6 @@ def MeasureFromFile(x,y,file):
     measurement = linInterpolate2D(x, y, X,Y,Z,f.x,f.y);
     return measurement;
     
-def MeasureFromVecs(xVec,yVec,x):
+def MeasureFromVecs(x, xVec, yVec):
     '''simulates a measurement from 2 vectors'''
     return linInterpolate1D(xVec,yVec,x) ;   
