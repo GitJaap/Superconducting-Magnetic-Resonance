@@ -28,7 +28,7 @@ config['instrument_server'] = False
 #config['datadir'] = 'd:/data'
 
 ## This sets a default directory for qtlab to start in
-config['startdir'] = os.path.join(os.getcwd(), 'project\\main');
+config['startdir'] = os.path.join(os.getcwd(), 'source\\project\\main');
 
 ## A default script (or list of scripts) to run after qtlab started
 config['startscript'] = ['main.py']      #e.g. 'initscript1.py'
