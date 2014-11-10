@@ -1,32 +1,34 @@
+__author__ = 'Jaap'
+
 '''
 Created on 23 okt. 2014
 
 Leverage algoritm function used to determine how different each point is from the
 rest of the points, by using singular value decomposition of a symmetric difference matrix
+and the leverage of the difference between neighbouring points.
 
 @author: Jaap
 '''
-from numpy import *;
-from project.measurement.meas import MeasureFromVecs
-from matplotlib.pyplot import *;
-import pylab as pl;
+import numpy as np
 
 def calcLeverage(yVec, k = 2):
     '''calculates the leverage of each point in the y-vector and outputs that as a vector of the same size by using the first k vectors'''
-    #start with creating the difference matrix 
-    nPoints = len(yVec);
+    #start with creating the difference matrix
+    nPoints = len(yVec)
     #create the distance matrix
-    M = zeros((nPoints,nPoints));
-    variance = abs(var(yVec));
+    M = np.zeros((nPoints,nPoints))
+    variance = abs(np.var(yVec))
     for i in range(0,nPoints):
-        M[:,i] = abs(yVec-yVec[i])/variance;
+        M[:,i] = (abs(yVec-yVec[i]))/variance
 
     #calculate the svd composition
-    u, s , v = linalg.svd(M);
+    u, s , v = np.linalg.svd(M)
 
     #calculate the leverage of each column to determine the points of interest
-    lev = (1/float(k))* sum(abs(v[0:k,:])*abs(v[0:k,:]),0);
-    return lev;
+    lev = (1/float(k))* sum(abs(v[0:k,:])*abs(v[0:k,:]),0)
+    #normalize the leverage
+    lev = lev/sum(lev)
+    return lev
 
 def getNewPoint(xCur, yCur, xMin, xMax, nPoints, nRough):
     '''
@@ -34,72 +36,76 @@ def getNewPoint(xCur, yCur, xMin, xMax, nPoints, nRough):
     :returns the list of xValues with one more value added
     '''
     #first convert the lists to arrays for computational simplicity
-    xCurA = array(xCur);
-    yCurA = array(yCur);
-    #xMin = xVec[0];
-    #xMax = xVec[-2];
+    xCurA = np.array(xCur)
+    yCurA = np.array(yCur)
+    #xMin = xVec[0]
+    #xMax = xVec[-2]
     #check if the list is not empty
     if(len(xCur) == 0):
-        xNext = xMin + (xMax - xMin) / nRough;
+        xNext = xMin
     #First iterate through the rough measurement
     elif(len(xCur) < nRough):
-        xNext = xCur[-1] + (xMax-xMin)/nRough;
+        xNext = xCur[-1] + (xMax-xMin)/(nRough-1)
     #now try to find the peak and take points in that region
     elif(len(xCur) == nRough):
         #create global variables to be used by the function when called again
         global weights
         global pointsPerInterval #array of desired points to be measured for each interval
-        global intervalCounter;
-        global pointsInIntervalCounter;
-        global xRough; #store the rough scan x points used for the interval measurements
-        global dRough;
+        global intervalCounter
+        global pointsInIntervalCounter
+        global xRough #store the rough scan x points used for the interval measurements
+        global dRough
 
-        weights = zeros(len(xCurA)-1);
-        pointsPerInterval = zeros(len(xCurA)-1)
-        xRough = xCurA;
-        dRough = xRough[1]-xRough[0];
-        intervalCounter = 0;
-        pointsInIntervalCounter = 1;
+        weights = np.zeros(len(xCurA)-1)
+        pointsPerInterval = np.zeros(len(xCurA)-1)
+        xRough = xCurA
+        dRough = xRough[1]-xRough[0]
+        intervalCounter = 0
+        pointsInIntervalCounter = 1
         #calculate the leverage for each point of the graph.
         lev = calcLeverage(yCurA ,2)
+        lev += calcLeverage(np.gradient(yCurA),2)
 
         #determine the weight of each interval using the 6 points around the interval starting at [x3,x4]
         for i in range(2,len(weights)-2):
             weights[i] = (1 / 4) * lev[i-2] + (1 / 2) * lev[i-1] + lev[i] + lev[i+1] + (1 / 2) * lev [i + 2] + (1 / 4) * lev [i + 3]
 
         #also give the weights at the edges
-        weights[0] = lev[0] + lev[1] + (1 / 2) * lev[2] + (1 / 4) * lev[3];
-        weights[1] = (1 / 2) * lev[0] + lev[1] + lev[2] + (1 / 2) * lev[3] + (1 / 4) * lev[4];
-        weights[-1] = lev[-1] + lev[-2] + (1 / 2) * lev[-3] + (1 / 4) * lev[-4];
-        weights[-2] = (1 / 2) * lev[-1] + lev[-2] + lev[-3] + (1 / 2) * lev[-4] + (1 / 4) * lev[-5];
+        weights[0] = lev[0] + lev[1] + (1 / 2) * lev[2] + (1 / 4) * lev[3]
+        weights[1] = (1 / 2) * lev[0] + lev[1] + lev[2] + (1 / 2) * lev[3] + (1 / 4) * lev[4]
+        weights[-1] = lev[-1] + lev[-2] + (1 / 2) * lev[-3] + (1 / 4) * lev[-4]
+        weights[-2] = (1 / 2) * lev[-1] + lev[-2] + lev[-3] + (1 / 2) * lev[-4] + (1 / 4) * lev[-5]
+
         #normalize the weights
-        weights = weights/sum(weights);
+        weights = weights/sum(weights)
         #spread the measurement points according to the weights found.
         for i in range(0,len(weights)):
-            pointsPerInterval[i] = round(weights[i]* (nPoints-nRough+1))
+            pointsPerInterval[i] = round((weights[i] * (nPoints - nRough+1)))
 
-        xNext = xRough[0] + dRough / (pointsPerInterval[0]+1);
-        print pointsPerInterval;
+        xNext = xRough[0] + dRough / (pointsPerInterval[0]+1)
+        print pointsPerInterval
+        print sum(pointsPerInterval)
         '''
-        figure(3);
+        figure(3)
         plot(xRough[1:]-dRough/2,pointsPerInterval)
-        pl.show();
+        pl.show()
         '''
     #the weights have been calculated so the precise measurement can be started
     if(len(xCur) > nRough):
         #check if one interval has been fully measured
-        i = intervalCounter; #improve code readability
-        j = pointsInIntervalCounter;
+        i = intervalCounter #improve code readability
+        j = pointsInIntervalCounter
         if(pointsPerInterval[intervalCounter] > pointsInIntervalCounter):
-            xNext = xRough[i] + (dRough / ((pointsPerInterval[i]+1)) * (j+1));
-            pointsInIntervalCounter += 1;
+            xNext = xRough[i] + (dRough / ((pointsPerInterval[i]+1)) * (j+1))
+            pointsInIntervalCounter += 1
         else:
             if(i == len(xRough)-1):
-                xNext = xRough[-1];
+                xNext = xRough[-1]
             else:
                 xNext = xRough[i+1]+ (dRough / (pointsPerInterval[i] + 1))
-                intervalCounter += 1;
-                pointsInIntervalCounter = 1;
+                if intervalCounter < len(pointsPerInterval)-1:
+                    intervalCounter += 1
+                pointsInIntervalCounter = 1
 
-    xCur.append(xNext);
-    return xCur;
+    xCur.append(xNext)
+    return xCur

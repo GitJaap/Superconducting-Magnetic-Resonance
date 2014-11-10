@@ -21,8 +21,8 @@ SET PATH=%CD%\3rd_party\Console2\;%PATH%
 ::SET PATH=%CD%\3rd_party\gtk\bin;%CD%\3rd_party\gtk\lib;%PATH%
 
 :: Check for version of python
-IF EXIST c:\python27_32bit\python.exe (
-    SET PYTHON_PATH=c:\python27_32bit
+IF EXIST c:\Python27\python.exe (
+    SET PYTHON_PATH=c:\Python27
     GOTO mark1
 )
 IF EXIST c:\python26\python.exe (
@@ -32,15 +32,9 @@ IF EXIST c:\python26\python.exe (
 :mark1
 
 :: Run QTlab
-:: check if version < 0.11
-IF EXIST "%PYTHON_PATH%\scripts\ipython.py" (
-    start Console -w "QTLab" -r "/k %PYTHON_PATH%\python.exe %PYTHON_PATH%\scripts\ipython.py -gthread -p sh source/qtlab_shell.py -- %*"
-    GOTO EOF
-)
-:: check if version >= 0.11
-IF EXIST "%PYTHON_PATH%\scripts\ipython-script.py" (
-    start Console -w "QTLab" -r "/k %PYTHON_PATH%\python.exe %PYTHON_PATH%\scripts\ipython-script.py --gui=gtk -i source/qtlab_shell.py -- %*"
-    GOTO EOF
+IF EXIST %PYTHON_PATH%\Scripts\ipython.exe (
+	start Console -w "QTLab" -r "/k %PYTHON_PATH%\python.exe %PYTHON_PATH%\Scripts\ipython.exe --gui=gtk -i source/qtlab_shell.py -- %*"
+	GOTO EOF
 )
 
 echo Failed to run qtlab.bat %PYTHON_PATH%
